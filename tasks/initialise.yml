@@ -1,0 +1,10 @@
+---
+- name: Wait for SSH connection to host
+  ansible.builtin.wait_for_connection:
+    delay: "{{ netboot_wait.ssh.delay }}"
+    timeout: "{{ netboot_wait.ssh.timeout }}"
+
+- name: Run common provision tasks
+  ansible.builtin.import_role:
+    name: wandansible.provision
+    tasks_from: common

@@ -1,0 +1,256 @@
+---
+argument_specs:
+  main:
+    short_description: Provision preseeded host via PXE
+    description: |
+      Provisions a host with an unattended install via PXE.
+      This is done by configuring the necessary files on a netboot server
+      to allow the machine to be netbooted and a debian preseed file to be passed to the OS installer.
+      The provision user is automatically created when the host is installed
+      and the username is set to provision_user_username and the password is set to provision_user_password.
+    options:
+      netboot_mac_addr:
+        description: MAC address for the interface used for netbooting
+        type: str
+        required: true
+
+      netboot_image:
+        description: Name of the image to boot and install
+        type: str
+        required: true
+
+      netboot_server:
+        description: |
+          Hostname of the remote netboot server to configure,
+          this must match the inventory_hostname of a netboot server in your ansible inventory
+        type: str
+        required: true
+
+      netboot_tftp_dir:
+        description: Directory, on the remote netboot server, containing the files served over TFTP
+        type: str
+        default: /srv/tftp
+
+      netboot_preseed_dir:
+        description: Directory, on the remote netboot server, for the debian preseed files
+        type: str
+        default: /srv/https/preseed
+
+      netboot_wait:
+        description: Netboot wait times
+        type: dict
+        default:
+          boot:
+            retries: 100
+            delay: 10
+            post_delay: 120
+          ssh:
+            delay: 0
+            timeout: 3600
+        options:
+          boot:
+            description: Wait times during initial PXE boot
+            type: dict
+            required: true
+            options:
+              retries:
+                description: Number of attempts to check if the host is reachable
+                type: int
+                required: true
+              delay:
+                description: Time in seconds to wait between checks
+                type: int
+                required: true
+              post_delay:
+                description: |
+                  Time in seconds to wait after the host is reachable
+                  before removing the grub and preseed configuration
+                  from the remote netboot server
+                type: int
+                required: true
+          ssh:
+            description: Wait times while checking for SSH connection
+            type: dict
+            required: true
+            options:
+              delay:
+                description: Time in seconds to wait before starting to poll
+                type: int
+                required: true
+              timeout:
+                description: Time in seconds to wait for an SSH connection
+                type: int
+                required: true
+
+      netboot_preseed_url:
+        description: URL for the hosts debian preseed file
+        type: str
+
+      netboot_network_interface:
+        description: |
+          Network interface static configuration.
+          The value of this is compatible with
+          https://github.com/wandansible/networking,
+          and by default the first interface from
+          network_interfaces is selected if it contains
+          static configuration. When this is set to
+          an empty dict then DHCP or autoconfiguration is used.
+        type: dict
+
+      netboot_distribution:
+        description: Distribution being installed, e.g. "ubuntu" or "debian"
+        type: str
+
+      netboot_mirror:
+        description: URL for apt mirror configured during installation
+        type: str
+
+      netboot_locale:
+        description: Locale configured during installation
+        type: str
+        default: en_US.UTF-8
+
+      netboot_timezone:
+        description: Timezone configured during installation
+        type: str
+        default: Etc/UTC
+
+      netboot_ntp_server:
+        description: Domain or address for NTP server configured during installation
+        type: str
+        default: pool.ntp.org
+
+      netboot_domain:
+        description: |
+          DNS search domain configured during installation, by default this is set to
+          everything after the first "." in inventory_hostname
+        type: str
+
+      netboot_disk:
+        description: |
+          Disk to use as the root drive, leave as an empty string
+          to use the first non-usb disk drive as the root drive
+        type: str
+
+      netboot_partition:
+        description: Partition configuration
+        type: dict
+        default:
+          method: regular
+          recipe: atomic
+        options:
+          method:
+            description: Partition type or method of installation
+            type: str
+            choices:
+              - regular
+              - lvm
+              - ask-during-install
+            default: regular
+          recipe:
+            description:
+              - "Partition structure for filesystem(s):"
+              - "  * atomic: all files in one partition"
+              - "  * home: separate /home partition"
+              - "  * multi: separate /home, /var, and /tmp partitions"
+            type: str
+            choices:
+              - atomic
+              - home
+              - multi
+            default: atomic
+          lvm_guided_size:
+            description: |
+              If method = lvm, set the size of the logical volume(s) based on this value.
+              This may be given as a percentage of the resulting volume group,
+              as a size of the combined logical volume(s), or as "max" to use the entire
+              volume group.
+            type: str
+            default: max
+
+      netboot_enable_unattended_upgrades:
+        description: If true, enable unattended upgrades during installation
+        type: bool
+        default: false
+
+      netboot_tasks:
+        description: List of tasks to install
+        type: list
+        elements: str
+
+      netboot_extra_tasks:
+        description: List of extra tasks to install
+        type: list
+        elements: str
+
+      netboot_packages:
+        description: List of packages to install
+        type: list
+        elements: str
+        default:
+          - openssh-server
+          - lsb-release
+          - sudo
+
+      netboot_extra_packages:
+        description: List of extra packages to install
+        type: list
+        elements: str
+
+      netboot_groups:
+        description: List of unix groups to add during installation
+        type: list
+        elements: dict
+        options:
+          name:
+            description: Name for the group
+            type: str
+            required: true
+          gid:
+            description: ID for the group
+            type: int
+            required: true
+
+      netboot_extra_preseed_lines:
+        description: Text for extra debian preseed configuration
+        type: str
+
+      netboot_extra_boot_options:
+        description: Text for extra grub boot configuration
+        type: str
+
+      debian_mirror:
+        description: Debian apt mirror URL
+        type: str
+        default: http://deb.debian.org/debian/
+
+      ubuntu_mirror:
+        description: Ubuntu apt mirror URL
+        type: str
+        default: http://archive.ubuntu.com/ubuntu/
+
+      desktop_env:
+        description: Name of desktop environment to install
+        type: str
+
+      provision_user_fullname:
+        description: Fullname for provision user
+        type: str
+        default: ansible
+
+      provision_user_groups:
+        description: List of groups to add the provision user to
+        type: list
+        elements: str
+        default:
+          - sudo
+
+      provision_user_uid:
+        description: |
+          UID for the provision user,
+          leave this set to 0 to automatically select a UID
+        type: int
+
+      root_password:
+        description: Password for root
+        type: str

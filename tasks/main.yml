@@ -1,0 +1,24 @@
+---
+- name: Get provision user credentials
+  ansible.builtin.import_role:
+    name: wandansible.provision
+    tasks_from: credentials
+
+- name: Configure netboot for machine as regular user
+  ansible.builtin.import_tasks: netboot.yml
+
+- name: Run tasks on machine as provision user using public key SSH authentication
+  ansible.builtin.import_tasks: initialise.yml
+  vars:
+    ansible_user: "{{ provision_user_username }}"
+    ansible_ssh_private_key_file: "{{ provision_user_private_key_file }}"
+    ansible_become_pass: "{{ provision_user_password }}"
+  when: provision_user_ssh_password == ""
+
+- name: Run tasks on machine as provision user using password-based SSH authentication
+  ansible.builtin.import_tasks: initialise.yml
+  vars:
+    ansible_user: "{{ provision_user_username }}"
+    ansible_ssh_pass: "{{ provision_user_ssh_password }}"
+    ansible_become_pass: "{{ provision_user_password }}"
+  when: provision_user_ssh_password != ""

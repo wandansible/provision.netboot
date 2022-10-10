@@ -1,0 +1,52 @@
+---
+- name: Configure grub
+  ansible.builtin.template:
+    src: grub.cfg
+    dest: "{{ netboot_tftp_dir }}/grub/\
+           {{ netboot_mac_addr | regex_replace(':', '-') | lower }}"
+    owner: root
+    group: root
+    mode: u=rw,g=r,o=r
+  delegate_to: "{{ netboot_server }}"
+
+- name: Configure preseed
+  ansible.builtin.template:
+    src: preseed/preseed.cfg
+    dest: "{{ netboot_preseed_dir }}/{{ inventory_hostname }}"
+    owner: root
+    group: root
+    mode: u=rw,g=r,o=r
+  delegate_to: "{{ netboot_server }}"
+
+- name: Boot message
+  ansible.builtin.debug:
+    msg: "Please network boot {{ inventory_hostname }}"
+
+- name: Wait for host to become reachable
+  ansible.builtin.command:
+    cmd: fping -m {{ ansible_host | default(inventory_hostname) }}
+  retries: "{{ netboot_wait.boot.retries }}"
+  delay: "{{ netboot_wait.boot.delay }}"
+  register: ping_result
+  until: ping_result.rc != 1
+  delegate_to: localhost
+  become: false
+  failed_when: ping_result.rc != 0 and ping_result.rc != 1
+  changed_when: false
+
+- name: Wait before clearing grub and preseed config
+  ansible.builtin.pause:
+    seconds: "{{ netboot_wait.boot.post_delay }}"
+
+- name: Clear grub config
+  ansible.builtin.file:
+    path: "{{ netboot_tftp_dir }}/grub/\
+           {{ netboot_mac_addr | regex_replace(':', '-') | lower }}"
+    state: absent
+  delegate_to: "{{ netboot_server }}"
+
+- name: Clear preseed config
+  ansible.builtin.file:
+    path: "{{ netboot_preseed_dir }}/{{ inventory_hostname }}"
+    state: absent
+  delegate_to: "{{ netboot_server }}"

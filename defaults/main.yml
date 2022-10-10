@@ -1,0 +1,65 @@
+---
+desktop_env: ""
+
+provision_user_fullname: "{{ provision_user_username | default('ansible') }}"
+provision_user_groups:
+  - sudo
+provision_user_uid: 0
+
+netboot_tftp_dir: /srv/tftp
+netboot_preseed_dir: /srv/https/preseed
+
+netboot_wait:
+  boot:
+    retries: 100
+    delay: 10
+    post_delay: 120
+  ssh:
+    delay: 0
+    timeout: 3600
+
+netboot_preseed_url: https://{{ netboot_server }}/preseed/{{ inventory_hostname }}
+
+netboot_network_interface: >-
+  {{ network_interfaces[0]
+  if network_interfaces is defined and
+  network_interfaces | length > 0 and
+  network_interfaces[0].families | selectattr("type", "equalto", "static") | list | length > 0
+  else {} }}
+
+netboot_distribution: "{{ 'ubuntu' if 'ubuntu' in netboot_image else 'debian' }}"
+
+debian_mirror: http://deb.debian.org/debian/
+ubuntu_mirror: http://archive.ubuntu.com/ubuntu/
+netboot_mirror: >-
+  {{ ubuntu_mirror
+  if netboot_distribution == "ubuntu"
+  else debian_mirror }}
+
+netboot_locale: en_US.UTF-8
+netboot_timezone: Etc/UTC
+netboot_ntp_server: pool.ntp.org
+netboot_domain: >-
+  {{ inventory_hostname | split(".", 1) | last
+  if "." in inventory_hostname
+  else "" }}
+
+netboot_disk: ""
+netboot_partition:
+  method: regular
+  recipe: atomic
+netboot_enable_unattended_upgrades: false
+netboot_tasks: >-
+  {{ ['standard', 'server']
+  if netboot_distribution == "ubuntu" and desktop_env == ""
+  else ['standard'] }}
+netboot_extra_tasks: []
+netboot_packages:
+  - openssh-server
+  - lsb-release
+  - sudo
+netboot_extra_packages: []
+netboot_groups: []
+netboot_extra_preseed_lines: ""
+
+netboot_extra_boot_options: ""
