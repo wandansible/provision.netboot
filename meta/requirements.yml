@@ -1,0 +1,3 @@
+---
+- name: wandansible.provision
+  src: https://github.com/wandansible/provision
