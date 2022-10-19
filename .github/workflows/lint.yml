@@ -15,6 +15,8 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
+      - name: Install dependencies
+        run: pip3 install -r requirements.txt
       - name: Lint ansible
         uses: wandansible/action-ansible-lint@v1
 

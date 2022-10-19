@@ -14,6 +14,8 @@ Requirements
 
 This role depends on the [base provision role](https://github.com/wandansible/provision).
 
+To use this role, the python package `netaddr` must be installed on the host running ansible.
+
 Role Variables
 --------------
 
