@@ -248,7 +248,7 @@ argument_specs:
       provision_user_uid:
         description: |
           UID for the provision user,
-          leave this set to 0 to automatically select a UID
+          leave this variable unset to automatically select a UID
         type: int
 
       root_password:
