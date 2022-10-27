@@ -39,8 +39,7 @@
 
 - name: Clear grub config
   ansible.builtin.file:
-    path: "{{ netboot_tftp_dir }}/grub/\
-           {{ netboot_mac_addr | regex_replace(':', '-') | lower }}"
+    path: "{{ netboot_tftp_dir }}/grub/{{ netboot_mac_addr | lower }}"
     state: absent
   delegate_to: "{{ netboot_server }}"
 
