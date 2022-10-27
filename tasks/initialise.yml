@@ -1,4 +1,29 @@
 ---
+- name: Check known_hosts file for old ssh host key
+  ansible.builtin.command: "ssh-keygen -f ~/.ssh/known_hosts -F {{ ansible_host }}"
+  delegate_to: localhost
+  become: false
+  changed_when: false
+  register: _check_known_hosts
+
+- name: Confirm old ssh host key deletion
+  ansible.builtin.pause:
+    prompt: |-
+      You have an old ssh host key stored for {{ inventory_hostname }} ({{ ansible_host }})
+      which will prevent ansible from connecting to the newly provisioned machine.
+
+      Do you wish to delete the old ssh host key? (y/n)
+  when: _check_known_hosts.rc == 0
+  register: _delete_ssh_host_key_prompt
+
+- name: Delete old ssh host key
+  ansible.builtin.command: "ssh-keygen -f ~/.ssh/known_hosts -R {{ ansible_host }}"
+  delegate_to: localhost
+  become: false
+  when:
+    - _check_known_hosts.rc == 0
+    - _delete_ssh_host_key_prompt.user_input | bool
+
 - name: Wait for SSH connection to host
   ansible.builtin.wait_for_connection:
     delay: "{{ netboot_wait.ssh.delay }}"
