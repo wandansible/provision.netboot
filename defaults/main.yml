@@ -4,7 +4,7 @@ desktop_env: ""
 provision_user_fullname: "{{ provision_user_username | default('ansible') }}"
 provision_user_groups:
   - sudo
-provision_user_uid: 0
+provision_user_uid: null
 
 netboot_tftp_dir: /srv/tftp
 netboot_preseed_dir: /srv/https/preseed

@@ -272,7 +272,7 @@ OPTIONS (= is mandatory):
         type: list
 
 - provision_user_uid
-        UID for the provision user, leave this set to 0 to
+        UID for the provision user, leave this variable unset to
         automatically select a UID
         [Default: (null)]
         type: int
