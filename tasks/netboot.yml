@@ -2,8 +2,7 @@
 - name: Configure grub
   ansible.builtin.template:
     src: grub.cfg
-    dest: "{{ netboot_tftp_dir }}/grub/\
-           {{ netboot_mac_addr | regex_replace(':', '-') | lower }}"
+    dest: "{{ netboot_tftp_dir }}/grub/{{ netboot_mac_addr | lower }}"
     owner: root
     group: root
     mode: u=rw,g=r,o=r
