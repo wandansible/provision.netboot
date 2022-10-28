@@ -1,5 +1,14 @@
 ---
-- name: Configure grub
+- name: Add pxelinux configuration file for machine being provisioned
+  ansible.builtin.template:
+    src: pxelinux.cfg
+    dest: "{{ netboot_tftp_dir }}/pxelinux.cfg/01-{{ netboot_mac_addr | regex_replace(':', '-') | lower }}"
+    owner: root
+    group: root
+    mode: u=rw,g=r,o=r
+  delegate_to: "{{ netboot_server }}"
+
+- name: Add grub configuration file for machine being provisioned
   ansible.builtin.template:
     src: grub.cfg
     dest: "{{ netboot_tftp_dir }}/grub/{{ netboot_mac_addr | lower }}"
@@ -28,13 +37,19 @@
   ansible.builtin.pause:
     seconds: "{{ netboot_wait.boot.post_delay }}"
 
-- name: Clear grub config
+- name: Remove pxelinux configuration file for machine being provisioned
+  ansible.builtin.file:
+    path: "{{ netboot_tftp_dir }}/pxelinux.cfg/01-{{ netboot_mac_addr | regex_replace(':', '-') | lower }}"
+    state: absent
+  delegate_to: "{{ netboot_server }}"
+
+- name: Remove grub configuration file for machine being provisioned
   ansible.builtin.file:
     path: "{{ netboot_tftp_dir }}/grub/{{ netboot_mac_addr | lower }}"
     state: absent
   delegate_to: "{{ netboot_server }}"
 
-- name: Clear preseed config
+- name: Remove preseed configuration file for machine being provisioned
   ansible.builtin.file:
     path: "{{ netboot_preseed_dir }}/{{ inventory_hostname }}"
     state: absent
