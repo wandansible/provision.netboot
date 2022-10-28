@@ -17,23 +17,14 @@
     mode: u=rw,g=r,o=r
   delegate_to: "{{ netboot_server }}"
 
-- name: Boot message
-  ansible.builtin.debug:
-    msg: "Please network boot {{ inventory_hostname }}"
+- name: Confirm machine has been network booted
+  ansible.builtin.pause:
+    prompt: |-
+      Please boot {{ inventory_hostname }} from the network to start the machine installation.
 
-- name: Wait for host to become reachable
-  ansible.builtin.command:
-    cmd: fping -m {{ ansible_host | default(inventory_hostname) }}
-  retries: "{{ netboot_wait.boot.retries }}"
-  delay: "{{ netboot_wait.boot.delay }}"
-  register: ping_result
-  until: ping_result.rc != 1
-  delegate_to: localhost
-  become: false
-  failed_when: ping_result.rc != 0 and ping_result.rc != 1
-  changed_when: false
+      After you have started the installation on the machine, press enter
 
-- name: Wait before clearing grub and preseed config
+- name: Wait before removing pxelinux, grub and preseed configuration files
   ansible.builtin.pause:
     seconds: "{{ netboot_wait.boot.post_delay }}"
 
